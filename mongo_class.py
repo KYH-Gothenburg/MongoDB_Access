@@ -17,6 +17,13 @@ class Document(ABC):
     def save(self):
         self.collection.insert_one(self.__dict__)
 
+    @classmethod
+    def all(cls):
+        return [cls(item) for item in cls.collection.find()]
+
+    @classmethod
+    def find(cls, **kwargs):
+        return [cls(item) for item in cls.collection.find(kwargs)]
 
 class Person(Document):
     collection = db.users
@@ -47,16 +54,13 @@ def main():
         'price': 3.45
     }
 
-    product = Product(product_dict)
-    product.save()
-
-    person = Person(user2)
-
+    result = Person.all()
+    result = Person.find(first_name='Fia', last_name='Svensson')
+    person = result[0]
+    person.first_name = 'Inga'
     person.save()
-
-    # person.__dict__ = user
-
-    print(person)
+    result = [Person(item) for item in db.users.find({'last_name': 'Svensson'})]
+    print()
 
 
 
