@@ -5,6 +5,14 @@ client = MongoClient('mongodb://root:s3cr37@localhost:27017')
 db = client.mydb
 
 
+class ResultList(list):
+    def first_or_none(self):
+        return self[0] if len(self) > 0 else None
+
+    def last_or_none(self):
+        return self[-1] if len(self) > 0 else None
+
+
 class Document(ABC):
     collection = None
 
@@ -15,7 +23,10 @@ class Document(ABC):
         return '\n'.join(f'{k} = {v}' for k, v in self.__dict__.items())
 
     def save(self):
-        self.collection.insert_one(self.__dict__)
+        if '_id' not in self.__dict__:
+            self.collection.insert_one(self.__dict__)
+        else:
+            self.collection.replace_one({'_id': self._id}, self.__dict__)
 
     @classmethod
     def all(cls):
@@ -23,7 +34,8 @@ class Document(ABC):
 
     @classmethod
     def find(cls, **kwargs):
-        return [cls(item) for item in cls.collection.find(kwargs)]
+        return ResultList(cls(item) for item in cls.collection.find(kwargs))
+
 
 class Person(Document):
     collection = db.users
@@ -35,7 +47,7 @@ class Product(Document):
 
 def main():
     user = {
-        'first_name': 'Lars',
+        'first_name': 'Petra',
         'last_name': 'Svensson',
         'phone_numbers': ['1212121', '456345343'],
         'address': {
@@ -45,22 +57,31 @@ def main():
         }
     }
 
-    user2 = {
-        'name': 'Lisa Lax'
-    }
+    products = [
+        {
+            'name': 'Chair',
+            'price': 45.67
+        },
+        {
+            'name': 'Car',
+            'price': 23.56
+        }
+    ]
 
-    product_dict = {
-        'name': 'Ball',
-        'price': 3.45
-    }
+    # TODO: Create this method
+    Product.insert_many(products)
 
-    result = Person.all()
-    result = Person.find(first_name='Fia', last_name='Svensson')
-    person = result[0]
-    person.first_name = 'Inga'
-    person.save()
-    result = [Person(item) for item in db.users.find({'last_name': 'Svensson'})]
-    print()
+    # TODO: Create this method
+    Person.delete(last_name='Svensson')
+
+    person = Person.find(age=34).first_or_none()
+    if person:
+        # TODO: Create this method
+        # Hint: db.collection.update_one({'_id': id}, {"$unset": {field: ""}})
+        person.delete_field('age')
+
+
+
 
 
 
