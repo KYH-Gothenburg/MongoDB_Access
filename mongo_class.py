@@ -28,9 +28,24 @@ class Document(ABC):
         else:
             self.collection.replace_one({'_id': self._id}, self.__dict__)
 
+    def delete(self):
+        self.collection.delete_one(self.__dict__)
+
+    def delete_field(self, field):
+        self.collection.update_one({'_id': self._id}, {"$unset": {field: ""}})
+
     @classmethod
     def all(cls):
         return [cls(item) for item in cls.collection.find()]
+
+    @classmethod
+    def insert_many(cls, items):
+        for item in items:
+            cls(item).save()
+
+    @classmethod
+    def delete_many(cls, **kwargs):
+        cls.collection.delete_many(kwargs)
 
     @classmethod
     def find(cls, **kwargs):
@@ -57,6 +72,17 @@ def main():
         }
     }
 
+    # person = Person.find(last_name='Svensson').first_or_none()
+    #
+    # person.delete()
+
+    item = {
+            'name': 'Chair',
+            'price': 45.67
+        }
+
+    product = Product(item)
+
     products = [
         {
             'name': 'Chair',
@@ -72,17 +98,13 @@ def main():
     Product.insert_many(products)
 
     # TODO: Create this method
-    Person.delete(last_name='Svensson')
+    Person.delete_many(last_name='Svensson')
 
     person = Person.find(age=34).first_or_none()
     if person:
         # TODO: Create this method
         # Hint: db.collection.update_one({'_id': id}, {"$unset": {field: ""}})
         person.delete_field('age')
-
-
-
-
 
 
 
